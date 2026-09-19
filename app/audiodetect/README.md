@@ -1,6 +1,6 @@
 # audiodetect：OpenVela 端侧应用
 
-本目录是 Audio Sentinel v10 的实际 OpenVela/NuttX 应用源码。赛事 manifest 将它映射到 OpenVela 工作区的 `apps/audiodetect`。
+本目录是 Audio Sentinel v11 的实际 OpenVela/NuttX 应用源码。赛事 manifest 将它映射到 OpenVela 工作区的 `apps/audiodetect`。
 
 ## 当前实现
 
@@ -50,4 +50,3 @@ nsh> audiodetect keyword /data/keyword.wav
 ```
 
 实时UI使用 `arecord -D default -r16000 -f16 -c1 -d3 /data/aed_live.wav`。它不是无间隙流式PCM管线；边界和未验证项请见仓库根目录README。
-

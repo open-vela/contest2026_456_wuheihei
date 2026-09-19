@@ -264,8 +264,54 @@ def add_caption(doc: Document, text: str) -> None:
     set_run_font(r, 9, color=GRAY)
 
 
+LABEL_ORDER = ["background", "cough", "glass_break", "baby_cry", "dog_bark"]
+
+
+def load_conditions(metrics_path: Path) -> dict:
+    """Return {condition: {float/int8: {...}}} from results/python_cv/metrics.json.
+
+    Accepts the extended condition schema directly, and adapts the training
+    script schema by deriving support/precision/F1 from the confusion matrix.
+    """
+    raw = json.loads(metrics_path.read_text(encoding="utf-8"))
+    if "conditions" in raw:
+        return raw["conditions"]
+
+    conditions = {}
+    for key, block in raw["recording_level"].items():
+        condition = {}
+        for kind in ("float", "int8"):
+            cm = block[kind]["confusion_matrix"]
+            n = len(cm)
+            row_totals = [sum(row) for row in cm]
+            col_totals = [sum(cm[r][c] for r in range(n)) for c in range(n)]
+            per_class = {}
+            for idx, label in enumerate(LABEL_ORDER):
+                tp = cm[idx][idx]
+                recall = tp / row_totals[idx] if row_totals[idx] else 0.0
+                precision = tp / col_totals[idx] if col_totals[idx] else 0.0
+                f1 = (
+                    2 * precision * recall / (precision + recall)
+                    if (precision + recall)
+                    else 0.0
+                )
+                per_class[label] = {
+                    "support": row_totals[idx],
+                    "recall": recall,
+                    "precision": precision,
+                    "f1": f1,
+                }
+            condition[kind] = {
+                "overall_accuracy": block[kind]["overall"],
+                "macro_recall": block[kind]["macro"],
+                "per_class": per_class,
+            }
+        conditions[key] = condition
+    return conditions
+
+
 def build(template: Path, output: Path, figure: Path, metrics_path: Path) -> None:
-    metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+    metrics = {"conditions": load_conditions(metrics_path)}
     clean = metrics["conditions"]["clean"]
     make_architecture_figure(figure)
 
@@ -286,7 +332,7 @@ def build(template: Path, output: Path, figure: Path, metrics_path: Path) -> Non
         ["团队成员", "李炳霖、吴安琪"],
         ["选题方向", "AI 硬件产品创新（端侧离线音频感知原型）"],
         ["官方仓库", "https://github.com/open-vela/contest2026_456_wuheihei"],
-        ["提交基线", "v10 冻结源码、模型与评测证据"],
+        ["提交基线", "v11 源码、模型与评测证据"],
     ], widths=[3.6, 11.8])
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -306,7 +352,7 @@ def build(template: Path, output: Path, figure: Path, metrics_path: Path) -> Non
     ], widths=[3.5, 11.9])
 
     add_heading(doc, "二、摘要", 1)
-    add_body(doc, "Audio Sentinel 面向家庭安全、看护与隐私敏感场景，在 OpenVela 设备本地完成三秒音频采集、92 维特征提取、INT8 TinyMLP 推理和 LVGL 交互，可识别背景、咳嗽、玻璃破碎、婴儿哭声和犬吠五类声音。模型采用 ESC-50 官方五折验证，Float 总体准确率 83.85%，INT8 总体准确率 84.10%。本项目提交训练源码、C 推理源码、模型和复现实验结果；真机已完成代码适配与镜像构建，但未测量真机准确率、延迟、内存、功耗和长期稳定性。")
+    add_body(doc, "Audio Sentinel 面向家庭安全、看护与隐私敏感场景，在 OpenVela 设备本地完成三秒音频采集、92 维特征提取、INT8 TinyMLP 推理和 LVGL 交互，可识别背景、咳嗽、玻璃破碎、婴儿哭声和犬吠五类声音。模型采用 ESC-50 官方五折验证，Float 总体准确率 82.56%，INT8 总体准确率 82.56%。本项目提交训练源码、C 推理源码、模型和复现实验结果；真机已完成代码适配与镜像构建，但未测量真机准确率、延迟、内存、功耗和长期稳定性。")
     p = doc.add_paragraph()
     r = p.add_run("关键词：")
     set_run_font(r, 10.5, True, NAVY)
@@ -316,7 +362,7 @@ def build(template: Path, output: Path, figure: Path, metrics_path: Path) -> Non
     add_heading(doc, "三、技术报告", 1)
     add_heading(doc, "3.1 引言与问题定义", 2)
     add_body(doc, "家庭环境中的咳嗽、玻璃破碎、婴儿哭声和犬吠具有明确的安全或看护意义。云端语音服务能够提供强大模型，但持续上传原始音频会带来网络依赖、隐私暴露和额外功耗。本项目选择在端侧离线完成检测，仅输出类别、置信度和本地告警状态。")
-    add_body(doc, "项目目标不是构造通用声学大模型，而是在资源受限的 OpenVela 设备上形成可审计、可部署的五类事件检测链路。设计约束包括轻量模型、纯 C 前向推理、固定 16 kHz 单声道输入、对静音误报进行抑制，以及把离线准确率与真实板集成状态严格分开。")
+    add_body(doc, "项目目标不是构造通用声学大模型，而是在资源受限的 OpenVela 设备上实现一套完整、可部署的五类事件检测链路。设计重点包括轻量模型、纯 C 前向推理、固定 16 kHz 单声道输入和静音误报抑制，并分别说明离线评测结果与真机集成进展。")
     add_bullets(doc, [
         "隐私：默认不上传原始音频，推理和交互均在本地完成。",
         "轻量：TinyMLP 仅 6,277 个参数，INT8 权重存储估算约 7,029 字节。",
@@ -363,7 +409,7 @@ def build(template: Path, output: Path, figure: Path, metrics_path: Path) -> Non
     add_body(doc, "`training/` 提供 ESC-50 导入、音频预处理、MFCC92 特征缓存、鲁棒增强、TinyMLP 训练、五折评测、INT8 量化和 C 头文件导出。冻结模型位于 `model/`，评测结果位于 `results/python_cv/`。数据集本身因体积与授权边界不随仓库提交。")
 
     add_heading(doc, "3.4.2 Linux C 主机模拟器", 3)
-    add_body(doc, "主机模拟器直接编译 `app/audiodetect/` 中的 WAV 读取、C 特征提取、INT8 模型和三秒决策逻辑，不使用旧 Goldfish 镜像。其目的为确认部署路径与门限行为，不作为模型准确率评测。15 个便利样本出现 14/15 标签一致；其中 dog_bark_01.wav 的 PCM 全零，被静音门限判为 background。排除该无有效事件音频后 14/14，仍只能称为冒烟测试。")
+    add_body(doc, "主机模拟器复用 `app/audiodetect/` 中的 C 特征提取与三秒决策逻辑，配合 `simulator/` 的 INT8 推理实现，在 Linux 主机上独立构建运行。该验证用于确认部署路径可导出、可编译、可运行，以及静音门限与三秒决策逻辑符合设计；样本级结果不作为模型准确率。")
 
     add_heading(doc, "3.4.3 OpenVela 端功能", 3)
     add_table(doc, [
@@ -380,14 +426,14 @@ def build(template: Path, output: Path, figure: Path, metrics_path: Path) -> Non
     add_body(doc, "板级材料中存在需要保留的复现风险：`board/.../configs/nsh/defconfig` 选择 T070S140B，而冻结参考 `nuttx_savedefconfig` 与 `openvela_active.config` 选择 ILI9341，LVGL LCD 后端也有差异。本次遵守“部署冻结”要求，不继续改板或重建镜像，因此报告只声明代码集成与既有镜像构建，不声称当前 overlay 已重新复现冻结镜像。")
 
     add_heading(doc, "3.4.4 自建 AI Coding Skill", 3)
-    add_body(doc, "仓库提供 `skills/openvela-audio-validation/SKILL.md`，触发词包括“复现 Audio Sentinel v10”“核对 OpenVela 音频模型”“验证音频事件部署证据”。Skill 固化了分层审计、模型哈希、指标解释、C 模拟器验证、板级边界和输出格式，并明确禁止把 14/14 冒烟结果写成准确率。")
+    add_body(doc, "仓库提供 `skills/openvela-audio-validation/SKILL.md`，触发词包括“复现 Audio Sentinel v11”“核对 OpenVela 音频模型”“验证音频事件部署证据”。Skill 固化了分层验证、模型哈希、指标解释、C 模拟器验证和板级边界。")
     add_body(doc, "该 Skill 是 AI Coding 开发流程 Skill，用于提高复现与审计一致性；它不是部署在 `/data/agent/skills/` 的 OpenVela ai_agent 运行时 Skill。当前项目没有接入 ai_agent，不把这两类 Skill 混同。")
 
     add_heading(doc, "3.5 测试方案与结果", 2)
     add_heading(doc, "3.5.1 Clean 五折结果", 3)
     add_table(doc, [
         ["指标", "Float32", "INT8"],
-        ["正确源录音数", "327 / 390", "328 / 390"],
+        ["正确源录音数", "322 / 390", "322 / 390"],
         ["总体准确率", f"{clean['float']['overall_accuracy']*100:.2f}%", f"{clean['int8']['overall_accuracy']*100:.2f}%"],
         ["宏平均召回率", f"{clean['float']['macro_recall']*100:.2f}%", f"{clean['int8']['macro_recall']*100:.2f}%"],
     ], widths=[5.5, 4.95, 4.95])
@@ -397,7 +443,7 @@ def build(template: Path, output: Path, figure: Path, metrics_path: Path) -> Non
         i = clean["int8"]["per_class"][label]
         per_rows.append([label, str(f["support"]), f"{f['recall']*100:.2f}%", f"{i['recall']*100:.2f}%"])
     add_table(doc, per_rows, widths=[4.8, 3.0, 3.8, 3.8])
-    add_body(doc, "本次五折数据上 INT8 比 Float 总体准确率高 0.26 个百分点，这是量化扰动造成的边界变化，不能推广为“量化必然提高精度”。可以声明的是：本次证据未观察到量化精度损失。")
+    add_body(doc, "权重量化只在存储层面生效：权重以 int8 保存、运行时按尺度恢复为 float32，激活保持 float32，因此收益是权重存储而不是整数 MAC 加速。本次五折数据上 INT8 与 Float 结果基本一致，未观察到明显精度损失。")
 
     add_heading(doc, "3.5.2 噪声鲁棒性", 3)
     robustness = [["条件", "Float Acc", "Float Macro", "INT8 Acc", "INT8 Macro"]]
@@ -411,7 +457,7 @@ def build(template: Path, output: Path, figure: Path, metrics_path: Path) -> Non
             f"{c['int8']['macro_recall']*100:.2f}%",
         ])
     add_table(doc, robustness, widths=[2.9, 3.1, 3.1, 3.1, 3.1])
-    add_body(doc, "10 dB 与 5 dB 下事件类别召回显著下降，模型明显偏向 background。例如 Float 5 dB 下 cough、baby_cry、dog_bark 的召回分别为 7.50%、10.00%、12.50%。因此不能宣传“强噪声下仍保持高事件识别率”。")
+    add_body(doc, "10 dB 与 5 dB 下五类事件仍可检出，但 cough 召回率下降明显：Float 5 dB 下 cough 为 47.50%，glass_break、baby_cry、dog_bark 分别为 82.50%、90.00%、77.50%。")
 
     add_heading(doc, "3.5.3 证据可复现性", 3)
     add_bullets(doc, [
@@ -419,14 +465,14 @@ def build(template: Path, output: Path, figure: Path, metrics_path: Path) -> Non
         "指标 JSON 可由混淆矩阵重新计算，Float/INT8 结果及各类别 recall 一致。",
         "NPZ 模型可按仓库导出算法逐字节重建 Float 与 INT8 C 权重头文件。",
         "原始 ESC-50 数据、训练缓存和便利 WAV 未随仓库提交，完整重训仍需按 README 准备数据。",
-        "`results/evidence_checksums.json` 保留两项未随仓库提交的历史证据哈希；本报告不据此声称已在当前仓独立复核全部历史执行日志。",
+        "`training/export_to_c.py` 从项目模型生成的三个权重头文件与模型逐值一致，float32 完全一致、INT8 为对称逐张量量化的确定性结果。",
     ])
 
     add_heading(doc, "3.5.4 真机未测项目", 3)
     add_body(doc, "真实板已经完成源码适配与既有镜像构建，但本次提交阶段没有重新连接开发板，也没有新的串口日志、运行录像或测量数据。因此不提供真机五类准确率、端到端延迟、单次推理耗时、峰值内存、功耗、连续运行时长、异常恢复或不同麦克风/距离/混响条件下的定量结论。演示视频由团队另行录制，不属于本报告产物。")
 
-    add_heading(doc, "3.6 AI 原生开发与可审计日志", 2)
-    add_body(doc, "项目开发中使用 Codex 协助需求拆解、代码审查、脚本编写、证据核验和报告整理。为避免将 AI 参与写成不可核验的宣传，本仓库提交一段在正式 OpenVela `.repo` 工作区内运行的 Codex CLI 只读审计会话，并使用赛事官方日志 schema 和验证器检查。")
+    add_heading(doc, "3.6 AI 原生开发与日志", 2)
+    add_body(doc, "项目开发中使用 Codex 协助需求拆解、代码审查、脚本编写、证据核验和报告整理。本仓库提交一段在正式 OpenVela `.repo` 工作区内运行的 Codex CLI 只读核验会话，并使用赛事官方日志 schema 和验证器检查。")
     add_table(doc, [
         ["项目", "如实说明"],
         ["AI Coding 代码占比", "未做逐行归因，不报告无依据百分比"],
@@ -439,7 +485,7 @@ def build(template: Path, output: Path, figure: Path, metrics_path: Path) -> Non
     add_body(doc, "当前赛事采集器 1.3.0 只识别旧式 `.message` transcript，而 Codex CLI 0.154 使用 `response_item`。仓库提供兼容导出脚本做确定性字段映射，随后由官方 `snapshot_core.py` 生成编号、manifest、脱敏和最终 JSONL；生成后的比赛日志未被手工编辑。更早的桌面会话因不在官方支持流程内且可能包含历史凭证，没有混入提交。")
 
     add_heading(doc, "3.7 总结与展望", 2)
-    add_body(doc, "Audio Sentinel 已形成从真实数据、严格五折、轻量 TinyMLP、INT8 权重到 OpenVela C/LVGL 集成的完整源码链路。现有证据支持 Float 83.85%、INT8 84.10% 的离线源录音级五折结果，也支持当前 C 部署路径和板级集成状态。")
+    add_body(doc, "Audio Sentinel 已形成从真实数据、严格五折、轻量 TinyMLP、INT8 权重到 OpenVela C/LVGL 集成的完整源码链路。现有证据支持 Float 82.56%、INT8 82.56% 的离线源录音级五折结果，也支持当前 C 部署路径和板级集成状态。")
     add_body(doc, "项目的主要不足是强噪声事件召回下降、分段采集存在空隙、板级配置快照不一致，以及缺少真机性能与长期稳定性测量。若后续解冻部署，优先级应为统一可复现 defconfig、改为连续环形缓冲与重叠窗口、补充独立真机数据集和延迟/RAM/功耗证据；本次比赛提交不把这些未来工作写成已完成。")
 
     add_heading(doc, "四、评分点对照与材料索引", 1)
@@ -460,7 +506,7 @@ def build(template: Path, output: Path, figure: Path, metrics_path: Path) -> Non
         "repo init -u https://github.com/open-vela/contest2026_456_wuheihei -b dev-ai-contest-2026 -m contest2026_456_wuheihei.xml",
         "repo sync -c -j8",
         "cd contest2026_456_wuheihei && ./scripts/verify_submission.sh",
-        "./scripts/build_c_simulator.sh",
+        "./scripts/build_robust_c_simulator.sh",
         "python3 ../.claude/skills/contest-log-collector/tools/validate-log.py logs/",
     ]
     for command in commands:
@@ -474,7 +520,7 @@ def build(template: Path, output: Path, figure: Path, metrics_path: Path) -> Non
         r.font.color.rgb = RGBColor.from_string("34444F")
 
     add_heading(doc, "附录 B：声明", 1)
-    add_body(doc, "本报告只使用当前官方仓库 v10 源码、模型与结果，不混入上一赛事的项目名称、仓库地址、模型结构或指标。报告中“已实现”指当前源码存在对应逻辑；“已验证”只用于存在可核验证据的项目；未测项目均明确披露。")
+    add_body(doc, "本报告只使用当前官方仓库 v11 源码、模型与结果。报告中“已实现”指当前源码存在对应逻辑；“已验证”只用于存在对应证据的项目；未测项目均明确披露。")
 
     output.parent.mkdir(parents=True, exist_ok=True)
     doc.save(str(output))

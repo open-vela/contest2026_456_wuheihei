@@ -5,7 +5,7 @@
 ## 采集过程
 
 1. 在通过官方 `repo init` / `repo sync` 建立、且根目录含 `.repo/` 的 OpenVela 工作区内运行 Codex CLI。
-2. 会话只读核验 v10 模型、Python 五折指标、C 主机模拟器证据和 OpenVela 功能边界。
+2. 会话只读核验 v11 模型、Python 五折指标、C 主机模拟器证据和 OpenVela 功能边界。
 3. 赛事官方采集器 1.3.0 的 `snapshot_core.py` 只识别旧式 `.message` 记录，而当前 Codex CLI 0.154 使用 `response_item` 记录。官方 Stop Hook 已运行，但未能解析当前格式。
 4. `scripts/export_codex_contest_log.py` 对原始 Codex rollout 做确定性字段映射，再把规范化的临时 transcript 交给官方 `snapshot_core.py`。编号、脱敏、manifest 和最终 JSONL 均由官方采集核心生成。
 
