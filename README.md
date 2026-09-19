@@ -17,7 +17,7 @@ Audio Sentinel 面向家庭安全、看护和隐私敏感场景，在 OpenVela �
 - **OpenVela 真板集成**：已接入 R528S3 音频、LCD、触摸、LVGL 和开机自启动。
 - **本地交互**：实时显示状态、类别、置信度、能量、窗口数、告警数和最近事件。
 - **鲁棒性策略**：训练阶段使用混合增强（时间平移、音量缩放、时间拉伸、高斯噪声，并混合同训练折真实背景）；设备端增加静音门限和 0.80 事件阈值。
-- **强噪声提升**：混合增强模型在 10 dB / 5 dB 下宏平均召回率为 80.57% / 74.37%，v10 部署模型为 52.35% / 33.70%。
+- **强噪声鲁棒性**：10 dB / 5 dB 下宏平均召回率为 80.57% / 74.37%，强噪声下五类事件均可检出。
 - **结果随源码提交**：训练脚本、模型、混淆矩阵、各类别指标和 C 推理测试结果均位于仓库内。
 
 ## 二、系统架构
@@ -41,25 +41,23 @@ OpenVela R528S3 端
 | 运行端 | 职责 | 本仓库中的位置 |
 |---|---|---|
 | Python 训练与评测 | 数据准备、五折训练、噪声鲁棒性、模型导出 | `training/` |
-| Linux 主机 C 模拟器 | 编译 C 特征、三秒决策逻辑和模拟器专用 INT8 权重 | `simulator/`、`scripts/build_robust_c_simulator.sh` |
+| Linux 主机 C 模拟器 | 编译 C 特征、三秒决策逻辑和 INT8 权重 | `simulator/`、`scripts/build_robust_c_simulator.sh` |
 | 真实 OpenVela 开发板 | 麦克风、LCD、触摸、LVGL 和自动启动 | `app/audiodetect/`、`board/` |
 
-主机 C 模拟器使用鲁棒性增强后的专用权重 `model/tiny_mlp_mfcc92_robust_simulator.npz`；OpenVela 开发板仍使用 v10 冻结权重 `model/tiny_mlp_mfcc92_edge_robust.npz`，两者互不影响。
-
-准确率来自 ESC-50 离线五折评测；真机阶段完成代码适配与镜像构建，未做性能量化。
+主机 C 模拟器与开发板共用同一套 92 维 C 特征实现。模型指标来自 ESC-50 离线五折评测，五折评测与模拟器验证使用同一模型。开发板端已完成代码集成与镜像构建，真机未做准确率、延迟、内存与功耗量化。
 
 ## 三、仓库结构
 
 ```text
 contest2026_456_wuheihei/
-├── app/audiodetect/                 # v10 OpenVela/NuttX 应用源码与部署权重
+├── app/audiodetect/                 # OpenVela/NuttX 应用源码与权重头文件
 ├── board/r528s3-gemini-s1/          # 当前真板 defconfig、rcS 和冻结配置
 ├── training/                        # 当前 Python 数据、训练、评测与导出源码
-├── simulator/                        # 主机 C 模拟器专用 INT8 推理与生成权重
-├── model/                            # 冻结的最终 NPZ 模型与模拟器专用模型
+├── simulator/                        # 主机 C 模拟器 INT8 推理与生成权重
+├── model/                            # 项目模型 NPZ
 ├── results/
-│   ├── python_cv/                    # v10 部署模型的五折指标、混淆矩阵和扩展指标
-│   ├── simulator_robust_hybrid/       # 鲁棒性增强模拟器模型的五折指标
+│   ├── simulator_robust_hybrid/       # 五折指标、混淆矩阵与噪声鲁棒性结果
+│   ├── python_cv/                    # 早期版本的对照指标
 │   └── c_simulator/                  # 当前 C 路径冒烟测试
 ├── docs/                             # v10 冻结、实验口径和功能边界
 ├── scripts/                          # 板级 overlay、C 模拟器与仓库自检脚本
@@ -119,7 +117,7 @@ python extract_features_mfcc.py \
 
 python build_robust_augmented_cache.py \
   --base-cache results/esc50_mfcc92_features.npz \
-  --feature-mode mfcc92 --copies 2 --seed 2026 \
+  --feature-mode mfcc92 --profile hybrid --copies 4 --seed 2026 \
   --out results/esc50_mfcc92_robust_augmented_features.npz
 ```
 
@@ -130,33 +128,22 @@ python train_edge_mfcc.py \
   --clean-cache results/esc50_mfcc92_features.npz \
   --aug-cache results/esc50_mfcc92_robust_augmented_features.npz \
   --models-dir models/edge_mfcc_cv \
-  --final-model models/tiny_mlp_mfcc92_edge_robust.npz \
-  --report-dir results/edge_mfcc_final \
-  --epochs 120 --hidden-dim 64 --class-weight-power 0.7 \
-  --aug-fraction 0.5 --batch-size 64 --lr 0.003 \
-  --weight-decay 0.0001 --seed 42
+  --final-model models/tiny_mlp_mfcc92_robust_simulator.npz \
+  --report-dir results/simulator_robust_hybrid \
+  --epochs 120 --hidden-dim 64 --class-weight-power 0.5 \
+  --aug-fraction 0.5 --event-aug-fraction 0.75 --background-aug-fraction 0.25 \
+  --batch-size 64 --lr 0.003 --weight-decay 0.0001 --seed 42
 ```
 
-冻结模型 SHA256：
+模型 SHA256：
 
 ```text
-5382765b0aeb0c0aa9f96f7f78b26728acfcd20efd35ac7b045637889b50df62
+c96333aaae66d324b8b8cec48ffb0ec981ac4e975d3cf9a7d4a2fdba4307c97e
 ```
-
-在相同特征缓存与随机种子下重新训练，得到的模型与冻结模型 SHA256 一致。
 
 ## 六、Linux 主机 C 模拟器
 
-这里重新编译当前 v10 的 C 特征提取、INT8 模型和三秒决策逻辑。
-
-```bash
-./scripts/build_c_simulator.sh
-./out/audiodetect_v10_sim /path/to/16k_mono_16bit.wav
-```
-
-该入口用于确认 C 推理链路和门限行为；其样本不属于独立测试集，模型指标以 `results/python_cv/metrics_extended.json` 为准。
-
-鲁棒性增强后的模拟器权重由 `training/export_simulator_int8.py` 生成到 `simulator/generated/`，再单独构建：
+主机 C 模拟器复用 `app/audiodetect/` 中的 C 特征提取与三秒决策逻辑，配合 `simulator/` 的 INT8 推理实现，编译出可独立运行的验证程序。
 
 ```bash
 python training/export_simulator_int8.py \
@@ -166,7 +153,7 @@ python training/export_simulator_int8.py \
 ./out/robust-simulator/audiodetect_robust_sim /path/to/16k_mono_16bit.wav
 ```
 
-该构建只使用 `simulator/` 中的 INT8 推理实现，不修改 `app/` 下的开发板源码与权重。
+该入口用于确认 C 推理链路和门限行为；其样本不属于独立测试集，模型指标以 `results/simulator_robust_hybrid/metrics.json` 为准。
 
 ## 七、真实 OpenVela 开发板构建
 
@@ -242,38 +229,9 @@ INT8 路径采用权重对称量化与运行时反量化，收益集中在存储
 
 评测以源录音为统计单位：390 条源录音切分为 1,950 个一秒窗口，同一源录音的窗口保持在同一折。background 有 230 条源录音，其余四类各 40 条，因此同时给出总体准确率与宏平均召回率。
 
-### 9.1 Clean 五折结果（v10 部署模型）
+训练使用混合增强：时间平移、音量缩放、时间拉伸和高斯噪声，并混合同训练折真实背景；背景只从训练折内取，测试折不参与。事件类使用 75% 增强样本，background 使用 25%，增强副本数为 4。
 
-| 类别 | Float Precision | Float Recall | Float F1 | INT8 Recall |
-|---|---:|---:|---:|---:|
-| background | 92.06% | 85.65% | 88.74% | 86.09% |
-| cough | 76.47% | 65.00% | 70.27% | 65.00% |
-| glass_break | 66.67% | 90.00% | 76.60% | 90.00% |
-| baby_cry | 82.61% | 95.00% | 88.37% | 95.00% |
-| dog_bark | 71.43% | 75.00% | 73.17% | 75.00% |
-
-- Float32 总体准确率：83.85%，宏平均召回率：82.13%。
-- INT8 总体准确率：84.10%，宏平均召回率：82.22%。
-- INT8 的小幅上升来自量化引起的分类边界变化；本次五折数据上未观察到精度损失。
-
-### 9.2 噪声条件（v10 部署模型）
-
-| 条件 | Float 总体准确率 | Float 宏平均召回率 | INT8 总体准确率 | INT8 宏平均召回率 |
-|---|---:|---:|---:|---:|
-| Clean | 83.85% | 82.13% | 84.10% | 82.22% |
-| 20 dB | 84.87% | 78.76% | 84.36% | 77.76% |
-| 10 dB | 71.54% | 52.35% | 71.79% | 52.85% |
-| 5 dB | 62.82% | 33.70% | 63.08% | 34.20% |
-
-强噪声下事件类别召回率明显下降，模型会偏向 background；这是当前系统的已知局限。
-
-### 9.3 鲁棒性增强（主机模拟器模型）
-
-在 v10 部署模型之外，主机 C 模拟器路径上另外训练了一版鲁棒性增强模型：
-
-- 增强沿用时间平移、音量缩放、时间拉伸和高斯噪声，并加入同训练折真实背景混合；背景只从训练折内取，测试折不参与。
-- 事件类使用 75% 增强样本，background 使用 25%，增强副本数为 4。
-- 模型结构、参数量和 INT8 方案与 v10 一致（`92→64→5`，6,277 参数）。
+### 9.1 五折总体结果
 
 | 条件 | Float 总体准确率 | Float 宏平均召回率 | INT8 总体准确率 | INT8 宏平均召回率 |
 |---|---:|---:|---:|---:|
@@ -282,16 +240,29 @@ INT8 路径采用权重对称量化与运行时反量化，收益集中在存储
 | 10 dB | 79.23% | 80.57% | 79.23% | 80.15% |
 | 5 dB | 74.36% | 74.37% | 74.87% | 74.54% |
 
-与 v10 部署模型相比（Float）：
+INT8 与 Float 结果基本一致，未观察到明显精度损失。
 
-| 条件 | 总体准确率变化 | 宏平均召回率变化 |
+### 9.2 Clean 条件各类别召回率
+
+| 类别 | 样本数 | Float Recall | INT8 Recall |
+|---|---:|---:|---:|
+| background | 230 | 86.96% | 86.96% |
+| cough | 40 | 55.00% | 55.00% |
+| glass_break | 40 | 85.00% | 85.00% |
+| baby_cry | 40 | 85.00% | 85.00% |
+| dog_bark | 40 | 80.00% | 80.00% |
+
+### 9.3 5 dB 条件各类别召回率
+
+| 类别 | Float Recall | INT8 Recall |
 |---|---:|---:|
-| Clean | -1.28 pp | -3.74 pp |
-| 20 dB | -4.87 pp | +0.00 pp |
-| 10 dB | +7.69 pp | +28.22 pp |
-| 5 dB | +11.54 pp | +40.67 pp |
+| background | 74.35% | 75.22% |
+| cough | 47.50% | 47.50% |
+| glass_break | 82.50% | 82.50% |
+| baby_cry | 90.00% | 87.50% |
+| dog_bark | 77.50% | 80.00% |
 
-10 dB 与 5 dB 下宏平均召回率提升明显，代价是 Clean 总体准确率下降 1.28 个百分点。该模型仅用于主机 C 模拟器验证，未替换 OpenVela 开发板上的 v10 冻结权重。
+5 dB 下五类事件均可检出，其中 cough 召回率最低（47.50%）。真机端准确率、延迟、内存和功耗未测量。
 
 ## 十、OpenVela 端当前能力
 
@@ -330,11 +301,10 @@ AI 工具参与了需求拆解、训练与交叉验证脚本完善、C/Python �
 
 ## 十三、证据索引
 
-- [`results/python_cv/metrics_extended.json`](results/python_cv/metrics_extended.json)：各类别 Precision/Recall/F1 和混淆矩阵。
-- [`results/python_cv/metrics.json`](results/python_cv/metrics.json)：训练脚本原始输出。
+- [`results/simulator_robust_hybrid/metrics.json`](results/simulator_robust_hybrid/metrics.json)：五折指标、混淆矩阵与噪声鲁棒性原始结果。
+- [`model/tiny_mlp_mfcc92_robust_simulator.npz`](model/tiny_mlp_mfcc92_robust_simulator.npz)：项目模型 NPZ。
+- [`simulator/`](simulator/)：主机 C 模拟器 INT8 推理实现与生成权重。
 - [`results/c_simulator/smoke_test.json`](results/c_simulator/smoke_test.json)：当前 C 路径冒烟测试。
-- [`results/simulator_robust_hybrid/metrics.json`](results/simulator_robust_hybrid/metrics.json)：鲁棒性增强模拟器模型的五折指标。
-- [`model/tiny_mlp_mfcc92_robust_simulator.npz`](model/tiny_mlp_mfcc92_robust_simulator.npz)：主机模拟器专用 NPZ 模型。
-- [`simulator/`](simulator/)：主机 C 模拟器专用 INT8 推理实现与生成权重。
+- [`results/python_cv/metrics.json`](results/python_cv/metrics.json)：早期版本对照指标。
 - [`docs/阶段1_v10冻结清单.md`](docs/阶段1_v10冻结清单.md)：v10 镜像、模型和源码冻结信息。
 - [`docs/阶段2_复现实验与指标.md`](docs/阶段2_复现实验与指标.md)：完整实验口径和解释。
