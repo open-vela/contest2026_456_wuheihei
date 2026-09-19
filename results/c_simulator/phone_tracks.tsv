@@ -1,0 +1,6 @@
+file	predicted	confidence	energy	windows	alert
+/data/home2/bling/project/qrs/audio-sentinel-phone-test/baby_cry_phone_test.wav	baby_cry	0.996950865	0.053393226	3	yes
+/data/home2/bling/project/qrs/audio-sentinel-phone-test/background_phone_test.wav	background	1.000000000	0.000006901	3	no
+/data/home2/bling/project/qrs/audio-sentinel-phone-test/cough_phone_test.wav	cough	0.999999762	0.009619843	3	yes
+/data/home2/bling/project/qrs/audio-sentinel-phone-test/dog_bark_phone_test.wav	background	1.000000000	0.000000000	3	no
+/data/home2/bling/project/qrs/audio-sentinel-phone-test/glass_break_phone_test.wav	glass_break	0.997380435	0.102266736	3	yes

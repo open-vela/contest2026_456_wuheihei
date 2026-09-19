@@ -1,0 +1,3 @@
+ifneq ($(CONFIG_AE_AUDIODETECT),)
+CONFIGURED_APPS += $(APPDIR)/audiodetect
+endif
