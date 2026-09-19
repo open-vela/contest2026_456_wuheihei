@@ -1,6 +1,6 @@
 # Python 训练与评测源码
 
-本目录对应 v10 的当前训练管线，依赖 Python 3.10+ 和 NumPy。
+本目录对应 v11 的当前训练管线，依赖 Python 3.10+ 和 NumPy。
 
 核心流程：
 
@@ -12,4 +12,3 @@
 6. `export_to_c.py`、`quantize_int8.py`：导出Float和INT8 C权重。
 
 数据集和特征缓存不提交；完整命令见仓库根目录README。
-

@@ -150,7 +150,7 @@ def main() -> None:
     parser.add_argument("--clean-cache", default="results/esc50_mfcc92_features.npz")
     parser.add_argument("--aug-cache", default="results/esc50_mfcc92_robust_augmented_features.npz")
     parser.add_argument("--models-dir", default="models/edge_mfcc_cv")
-    parser.add_argument("--final-model", default="models/tiny_mlp_mfcc92_edge_robust.npz")
+    parser.add_argument("--final-model", default="models/tiny_mlp_mfcc92_robust_simulator.npz")
     parser.add_argument("--report-dir", default="results/edge_mfcc_final")
     parser.add_argument("--noise-cache-dir",
                         help="reuse noisy feature caches from another report directory")

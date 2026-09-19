@@ -20,5 +20,4 @@ cp "$team_dir/board/r528s3-gemini-s1/configs/nsh/defconfig" \
 cp "$team_dir/board/r528s3-gemini-s1/src/etc/init.d/rcS.nsh" \
   "$board_dir/src/etc/init.d/rcS.nsh"
 
-echo "Applied Audio Sentinel v10 board overlay to: $board_dir"
-
+echo "Applied Audio Sentinel v11 board overlay to: $board_dir"

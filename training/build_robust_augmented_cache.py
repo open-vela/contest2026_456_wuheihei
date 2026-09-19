@@ -117,7 +117,7 @@ def main() -> None:
         "--profile",
         choices=("current", "competition", "hybrid"),
         default="hybrid",
-        help="current v10, previous-competition recipe, or their leakage-safe hybrid",
+        help="baseline, previous-competition recipe, or their leakage-safe hybrid",
     )
     parser.add_argument("--out", default="results/esc50_robust_augmented_features.npz")
     args = parser.parse_args()

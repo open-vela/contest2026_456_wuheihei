@@ -1,8 +1,0 @@
-{
-  "freeze_manifest_sha256": "4a6489176f58421b6b90e11f0db9dca69e91b670328d9ec07e4833b74600a1e2",
-  "reproduced_metrics_sha256": "85fde42985969a61e645f7315f42f82b59cb3089d5648556bf772e86602d0ff7",
-  "extended_metrics_sha256": "c4cdd3c9fc2e459aca35a501bb1ec2aefe1b893e0a9c5e62b2730f250810c6d7",
-  "reproduced_model_sha256": "5382765b0aeb0c0aa9f96f7f78b26728acfcd20efd35ac7b045637889b50df62",
-  "c_simulator_smoke_sha256": "4774dfb510c3f91917192958af2163c6b168d5d34835bf438ead0d908db971db",
-  "execution_log_sha256": "f0eb7d5ea7bd427cc5f77693ea1ecdf0fdbdcf34bb6149c365132ac8245e4be8"
-}

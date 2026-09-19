@@ -6,7 +6,7 @@
 
 Audio Sentinel 面向家庭安全、看护和隐私敏感场景，在 OpenVela 设备本地完成麦克风采集、音频特征提取、轻量模型推理和可视化告警。系统识别 `background`、`cough`、`glass_break`、`baby_cry`、`dog_bark` 五类声音；默认推理不依赖云端，也不上传原始音频。
 
-本仓库内容对应 v10 冻结版本的应用源码、模型与评测结果。
+本仓库内容对应 v11 版本的应用源码、模型与评测结果。
 
 ## 一、作品亮点
 
@@ -56,10 +56,8 @@ contest2026_456_wuheihei/
 ├── simulator/                        # 主机 C 模拟器 INT8 推理与生成权重
 ├── model/                            # 项目模型 NPZ
 ├── results/
-│   ├── simulator_robust_hybrid/       # 五折指标、混淆矩阵与噪声鲁棒性结果
-│   ├── python_cv/                    # 早期版本的对照指标
-│   └── c_simulator/                  # 当前 C 路径冒烟测试
-├── docs/                             # v10 冻结、实验口径和功能边界
+│   └── python_cv/                    # 五折指标、混淆矩阵与噪声鲁棒性结果
+├── docs/                             # 实验口径、功能边界与提交材料
 ├── scripts/                          # 板级 overlay、C 模拟器与仓库自检脚本
 ├── logs/                             # 官方格式 AI Coding 日志目录
 └── contest2026_456_wuheihei.xml      # repo manifest，映射应用到 apps/audiodetect
@@ -129,7 +127,7 @@ python train_edge_mfcc.py \
   --aug-cache results/esc50_mfcc92_robust_augmented_features.npz \
   --models-dir models/edge_mfcc_cv \
   --final-model models/tiny_mlp_mfcc92_robust_simulator.npz \
-  --report-dir results/simulator_robust_hybrid \
+  --report-dir results/python_cv \
   --epochs 120 --hidden-dim 64 --class-weight-power 0.5 \
   --aug-fraction 0.5 --event-aug-fraction 0.75 --background-aug-fraction 0.25 \
   --batch-size 64 --lr 0.003 --weight-decay 0.0001 --seed 42
@@ -153,7 +151,7 @@ python training/export_simulator_int8.py \
 ./out/robust-simulator/audiodetect_robust_sim /path/to/16k_mono_16bit.wav
 ```
 
-该入口用于确认 C 推理链路和门限行为；其样本不属于独立测试集，模型指标以 `results/simulator_robust_hybrid/metrics.json` 为准。
+该入口用于确认 C 推理链路和门限行为；其样本不属于独立测试集，模型指标以 `results/python_cv/metrics.json` 为准。
 
 ## 七、真实 OpenVela 开发板构建
 
@@ -172,9 +170,9 @@ make -C nuttx EXTRAFLAGS="-Wno-cpp -Wno-deprecated-declarations" -j16
 
 当前冻结镜像信息：
 
-- 生成时间：2026-09-18 10:45:09（UTC-04:00）
+- 生成时间：2026-09-19 09:57:09（UTC-04:00）
 - 大小：113,143,844 字节
-- SHA256：`046ae62216b8cdc00681471e58f8eb46837a5d4c399e7fd59fe364f3684658c2`
+- SHA256：`e4aead1e04c0633e9c9017b6023acfc21d13c3cd4d40d574007dae32f5181db4`
 
 镜像体积为整个 OpenVela 固件大小，编译产物不随仓库提交。
 
@@ -301,10 +299,9 @@ AI 工具参与了需求拆解、训练与交叉验证脚本完善、C/Python �
 
 ## 十三、证据索引
 
-- [`results/simulator_robust_hybrid/metrics.json`](results/simulator_robust_hybrid/metrics.json)：五折指标、混淆矩阵与噪声鲁棒性原始结果。
+- [`results/python_cv/metrics.json`](results/python_cv/metrics.json)：五折指标、混淆矩阵与噪声鲁棒性原始结果。
 - [`model/tiny_mlp_mfcc92_robust_simulator.npz`](model/tiny_mlp_mfcc92_robust_simulator.npz)：项目模型 NPZ。
+- [`app/audiodetect/model_weights.h`](app/audiodetect/model_weights.h)、[`model_weights_int8.h`](app/audiodetect/model_weights_int8.h)：开发板权重头文件，由 `training/export_to_c.py` 从项目模型生成。
 - [`simulator/`](simulator/)：主机 C 模拟器 INT8 推理实现与生成权重。
-- [`results/c_simulator/smoke_test.json`](results/c_simulator/smoke_test.json)：当前 C 路径冒烟测试。
-- [`results/python_cv/metrics.json`](results/python_cv/metrics.json)：早期版本对照指标。
-- [`docs/阶段1_v10冻结清单.md`](docs/阶段1_v10冻结清单.md)：v10 镜像、模型和源码冻结信息。
 - [`docs/阶段2_复现实验与指标.md`](docs/阶段2_复现实验与指标.md)：完整实验口径和解释。
+- [`docs/OpenVela端功能边界.md`](docs/OpenVela端功能边界.md)：OpenVela 端能力边界。
