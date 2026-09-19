@@ -1,0 +1,46 @@
+config AE_AUDIODETECT
+	tristate "Offline audio event detection demo (5 classes + alarm + keyword + int8)"
+	default n
+	---help---
+		Enable the lightweight offline audio event detection demo.
+		Detects background, cough, glass_break, baby_cry and dog_bark
+		using 92-dimensional time/MFCC/delta statistics and a TinyMLP
+		(92->64->5). Includes local alarm, optional remote HTTP/MQTT
+		alarm reporting, multi-SNR robustness checks and keyword recognition.
+
+if AE_AUDIODETECT
+
+config AE_AUDIODETECT_PROGNAME
+	string "Program name"
+	default "audiodetect"
+
+config AE_AUDIODETECT_PRIORITY
+	int "audiodetect task priority"
+	default 100
+
+config AE_AUDIODETECT_STACKSIZE
+	int "audiodetect stack size (bytes)"
+	default 65536
+
+config AE_AUDIODETECT_UI
+	bool "Touch interface with continuous microphone monitoring"
+	default n
+	depends on GRAPHICS_LVGL
+	---help---
+		Enable a 1024x600 LVGL touch interface. The interface records
+		three-second segments, analyzes three one-second model windows,
+		and displays live probabilities and recent alerts.
+
+if AE_AUDIODETECT_UI
+
+config AE_AUDIODETECT_UI_AUTOSTART
+	bool "Start the touch interface during board boot"
+	default y
+
+config AE_AUDIODETECT_UI_INPUT_DEVPATH
+	string "Touchscreen input device"
+	default "/dev/input0"
+
+endif
+
+endif

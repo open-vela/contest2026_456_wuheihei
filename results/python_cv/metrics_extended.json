@@ -1,0 +1,669 @@
+{
+  "method": {
+    "unit": "source recording",
+    "split": "official ESC-50 folds; all windows from one source stay in one fold",
+    "folds": 5,
+    "warning": "These are simulator/offline evaluation results, not measured real-board accuracy. Overall accuracy is influenced by the larger background class; macro and per-class metrics must be reported alongside it."
+  },
+  "fold_clean_float_accuracy": [
+    {
+      "fold": 1,
+      "overall": 0.8809523809523809,
+      "macro_recall": 0.876923076923077
+    },
+    {
+      "fold": 2,
+      "overall": 0.8333333333333334,
+      "macro_recall": 0.7769230769230769
+    },
+    {
+      "fold": 3,
+      "overall": 0.8333333333333334,
+      "macro_recall": 0.82
+    },
+    {
+      "fold": 4,
+      "overall": 0.8055555555555556,
+      "macro_recall": 0.8300000000000001
+    },
+    {
+      "fold": 5,
+      "overall": 0.8333333333333334,
+      "macro_recall": 0.7989130434782609
+    }
+  ],
+  "conditions": {
+    "clean": {
+      "float": {
+        "overall_accuracy": 0.8384615384615385,
+        "macro_recall": 0.821304347826087,
+        "per_class": {
+          "background": {
+            "support": 230,
+            "correct": 197,
+            "precision": 0.9205607476635514,
+            "recall": 0.8565217391304348,
+            "f1": 0.8873873873873874
+          },
+          "cough": {
+            "support": 40,
+            "correct": 26,
+            "precision": 0.7647058823529411,
+            "recall": 0.65,
+            "f1": 0.7027027027027027
+          },
+          "glass_break": {
+            "support": 40,
+            "correct": 36,
+            "precision": 0.6666666666666666,
+            "recall": 0.9,
+            "f1": 0.7659574468085106
+          },
+          "baby_cry": {
+            "support": 40,
+            "correct": 38,
+            "precision": 0.8260869565217391,
+            "recall": 0.95,
+            "f1": 0.8837209302325583
+          },
+          "dog_bark": {
+            "support": 40,
+            "correct": 30,
+            "precision": 0.7142857142857143,
+            "recall": 0.75,
+            "f1": 0.7317073170731706
+          }
+        },
+        "confusion_matrix": [
+          [
+            197,
+            5,
+            10,
+            7,
+            11
+          ],
+          [
+            7,
+            26,
+            5,
+            1,
+            1
+          ],
+          [
+            4,
+            0,
+            36,
+            0,
+            0
+          ],
+          [
+            2,
+            0,
+            0,
+            38,
+            0
+          ],
+          [
+            4,
+            3,
+            3,
+            0,
+            30
+          ]
+        ]
+      },
+      "int8": {
+        "overall_accuracy": 0.841025641025641,
+        "macro_recall": 0.8221739130434782,
+        "per_class": {
+          "background": {
+            "support": 230,
+            "correct": 198,
+            "precision": 0.9209302325581395,
+            "recall": 0.8608695652173913,
+            "f1": 0.8898876404494381
+          },
+          "cough": {
+            "support": 40,
+            "correct": 26,
+            "precision": 0.7647058823529411,
+            "recall": 0.65,
+            "f1": 0.7027027027027027
+          },
+          "glass_break": {
+            "support": 40,
+            "correct": 36,
+            "precision": 0.6666666666666666,
+            "recall": 0.9,
+            "f1": 0.7659574468085106
+          },
+          "baby_cry": {
+            "support": 40,
+            "correct": 38,
+            "precision": 0.8444444444444444,
+            "recall": 0.95,
+            "f1": 0.8941176470588236
+          },
+          "dog_bark": {
+            "support": 40,
+            "correct": 30,
+            "precision": 0.7142857142857143,
+            "recall": 0.75,
+            "f1": 0.7317073170731706
+          }
+        },
+        "confusion_matrix": [
+          [
+            198,
+            5,
+            10,
+            6,
+            11
+          ],
+          [
+            7,
+            26,
+            5,
+            1,
+            1
+          ],
+          [
+            4,
+            0,
+            36,
+            0,
+            0
+          ],
+          [
+            2,
+            0,
+            0,
+            38,
+            0
+          ],
+          [
+            4,
+            3,
+            3,
+            0,
+            30
+          ]
+        ]
+      }
+    },
+    "snr_20db": {
+      "float": {
+        "overall_accuracy": 0.8487179487179487,
+        "macro_recall": 0.787608695652174,
+        "per_class": {
+          "background": {
+            "support": 230,
+            "correct": 210,
+            "precision": 0.8860759493670886,
+            "recall": 0.9130434782608695,
+            "f1": 0.899357601713062
+          },
+          "cough": {
+            "support": 40,
+            "correct": 21,
+            "precision": 0.875,
+            "recall": 0.525,
+            "f1": 0.6562500000000001
+          },
+          "glass_break": {
+            "support": 40,
+            "correct": 32,
+            "precision": 0.64,
+            "recall": 0.8,
+            "f1": 0.7111111111111111
+          },
+          "baby_cry": {
+            "support": 40,
+            "correct": 36,
+            "precision": 0.8372093023255814,
+            "recall": 0.9,
+            "f1": 0.8674698795180723
+          },
+          "dog_bark": {
+            "support": 40,
+            "correct": 32,
+            "precision": 0.8888888888888888,
+            "recall": 0.8,
+            "f1": 0.8421052631578948
+          }
+        },
+        "confusion_matrix": [
+          [
+            210,
+            2,
+            10,
+            5,
+            3
+          ],
+          [
+            12,
+            21,
+            4,
+            2,
+            1
+          ],
+          [
+            7,
+            1,
+            32,
+            0,
+            0
+          ],
+          [
+            4,
+            0,
+            0,
+            36,
+            0
+          ],
+          [
+            4,
+            0,
+            4,
+            0,
+            32
+          ]
+        ]
+      },
+      "int8": {
+        "overall_accuracy": 0.8435897435897436,
+        "macro_recall": 0.7776086956521739,
+        "per_class": {
+          "background": {
+            "support": 230,
+            "correct": 210,
+            "precision": 0.8860759493670886,
+            "recall": 0.9130434782608695,
+            "f1": 0.899357601713062
+          },
+          "cough": {
+            "support": 40,
+            "correct": 19,
+            "precision": 0.8636363636363636,
+            "recall": 0.475,
+            "f1": 0.6129032258064516
+          },
+          "glass_break": {
+            "support": 40,
+            "correct": 32,
+            "precision": 0.6153846153846154,
+            "recall": 0.8,
+            "f1": 0.6956521739130435
+          },
+          "baby_cry": {
+            "support": 40,
+            "correct": 36,
+            "precision": 0.8372093023255814,
+            "recall": 0.9,
+            "f1": 0.8674698795180723
+          },
+          "dog_bark": {
+            "support": 40,
+            "correct": 32,
+            "precision": 0.8888888888888888,
+            "recall": 0.8,
+            "f1": 0.8421052631578948
+          }
+        },
+        "confusion_matrix": [
+          [
+            210,
+            2,
+            10,
+            5,
+            3
+          ],
+          [
+            12,
+            19,
+            6,
+            2,
+            1
+          ],
+          [
+            7,
+            1,
+            32,
+            0,
+            0
+          ],
+          [
+            4,
+            0,
+            0,
+            36,
+            0
+          ],
+          [
+            4,
+            0,
+            4,
+            0,
+            32
+          ]
+        ]
+      }
+    },
+    "snr_10db": {
+      "float": {
+        "overall_accuracy": 0.7153846153846154,
+        "macro_recall": 0.5234782608695652,
+        "per_class": {
+          "background": {
+            "support": 230,
+            "correct": 211,
+            "precision": 0.7589928057553957,
+            "recall": 0.9173913043478261,
+            "f1": 0.8307086614173229
+          },
+          "cough": {
+            "support": 40,
+            "correct": 12,
+            "precision": 0.35294117647058826,
+            "recall": 0.3,
+            "f1": 0.3243243243243243
+          },
+          "glass_break": {
+            "support": 40,
+            "correct": 15,
+            "precision": 0.625,
+            "recall": 0.375,
+            "f1": 0.46875
+          },
+          "baby_cry": {
+            "support": 40,
+            "correct": 22,
+            "precision": 0.8461538461538461,
+            "recall": 0.55,
+            "f1": 0.6666666666666667
+          },
+          "dog_bark": {
+            "support": 40,
+            "correct": 19,
+            "precision": 0.6785714285714286,
+            "recall": 0.475,
+            "f1": 0.5588235294117648
+          }
+        },
+        "confusion_matrix": [
+          [
+            211,
+            8,
+            5,
+            3,
+            3
+          ],
+          [
+            21,
+            12,
+            3,
+            1,
+            3
+          ],
+          [
+            14,
+            8,
+            15,
+            0,
+            3
+          ],
+          [
+            17,
+            1,
+            0,
+            22,
+            0
+          ],
+          [
+            15,
+            5,
+            1,
+            0,
+            19
+          ]
+        ]
+      },
+      "int8": {
+        "overall_accuracy": 0.717948717948718,
+        "macro_recall": 0.5284782608695652,
+        "per_class": {
+          "background": {
+            "support": 230,
+            "correct": 211,
+            "precision": 0.7617328519855595,
+            "recall": 0.9173913043478261,
+            "f1": 0.8323471400394478
+          },
+          "cough": {
+            "support": 40,
+            "correct": 12,
+            "precision": 0.35294117647058826,
+            "recall": 0.3,
+            "f1": 0.3243243243243243
+          },
+          "glass_break": {
+            "support": 40,
+            "correct": 15,
+            "precision": 0.625,
+            "recall": 0.375,
+            "f1": 0.46875
+          },
+          "baby_cry": {
+            "support": 40,
+            "correct": 22,
+            "precision": 0.8461538461538461,
+            "recall": 0.55,
+            "f1": 0.6666666666666667
+          },
+          "dog_bark": {
+            "support": 40,
+            "correct": 20,
+            "precision": 0.6896551724137931,
+            "recall": 0.5,
+            "f1": 0.5797101449275363
+          }
+        },
+        "confusion_matrix": [
+          [
+            211,
+            8,
+            5,
+            3,
+            3
+          ],
+          [
+            21,
+            12,
+            3,
+            1,
+            3
+          ],
+          [
+            14,
+            8,
+            15,
+            0,
+            3
+          ],
+          [
+            17,
+            1,
+            0,
+            22,
+            0
+          ],
+          [
+            14,
+            5,
+            1,
+            0,
+            20
+          ]
+        ]
+      }
+    },
+    "snr_5db": {
+      "float": {
+        "overall_accuracy": 0.6282051282051282,
+        "macro_recall": 0.3369565217391305,
+        "per_class": {
+          "background": {
+            "support": 230,
+            "correct": 215,
+            "precision": 0.6761006289308176,
+            "recall": 0.9347826086956522,
+            "f1": 0.7846715328467152
+          },
+          "cough": {
+            "support": 40,
+            "correct": 3,
+            "precision": 0.2,
+            "recall": 0.075,
+            "f1": 0.10909090909090907
+          },
+          "glass_break": {
+            "support": 40,
+            "correct": 18,
+            "precision": 0.4090909090909091,
+            "recall": 0.45,
+            "f1": 0.4285714285714286
+          },
+          "baby_cry": {
+            "support": 40,
+            "correct": 4,
+            "precision": 0.5714285714285714,
+            "recall": 0.1,
+            "f1": 0.1702127659574468
+          },
+          "dog_bark": {
+            "support": 40,
+            "correct": 5,
+            "precision": 0.8333333333333334,
+            "recall": 0.125,
+            "f1": 0.21739130434782608
+          }
+        },
+        "confusion_matrix": [
+          [
+            215,
+            3,
+            10,
+            2,
+            0
+          ],
+          [
+            23,
+            3,
+            12,
+            1,
+            1
+          ],
+          [
+            17,
+            5,
+            18,
+            0,
+            0
+          ],
+          [
+            36,
+            0,
+            0,
+            4,
+            0
+          ],
+          [
+            27,
+            4,
+            4,
+            0,
+            5
+          ]
+        ]
+      },
+      "int8": {
+        "overall_accuracy": 0.6307692307692307,
+        "macro_recall": 0.34195652173913044,
+        "per_class": {
+          "background": {
+            "support": 230,
+            "correct": 215,
+            "precision": 0.6761006289308176,
+            "recall": 0.9347826086956522,
+            "f1": 0.7846715328467152
+          },
+          "cough": {
+            "support": 40,
+            "correct": 3,
+            "precision": 0.21428571428571427,
+            "recall": 0.075,
+            "f1": 0.1111111111111111
+          },
+          "glass_break": {
+            "support": 40,
+            "correct": 18,
+            "precision": 0.4090909090909091,
+            "recall": 0.45,
+            "f1": 0.4285714285714286
+          },
+          "baby_cry": {
+            "support": 40,
+            "correct": 5,
+            "precision": 0.625,
+            "recall": 0.125,
+            "f1": 0.20833333333333334
+          },
+          "dog_bark": {
+            "support": 40,
+            "correct": 5,
+            "precision": 0.8333333333333334,
+            "recall": 0.125,
+            "f1": 0.21739130434782608
+          }
+        },
+        "confusion_matrix": [
+          [
+            215,
+            3,
+            10,
+            2,
+            0
+          ],
+          [
+            23,
+            3,
+            12,
+            1,
+            1
+          ],
+          [
+            17,
+            5,
+            18,
+            0,
+            0
+          ],
+          [
+            35,
+            0,
+            0,
+            5,
+            0
+          ],
+          [
+            28,
+            3,
+            4,
+            0,
+            5
+          ]
+        ]
+      }
+    }
+  }
+}
