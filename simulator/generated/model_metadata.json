@@ -1,0 +1,7 @@
+{
+  "source_model": "models/tiny_mlp_mfcc92_robust_simulator.npz",
+  "architecture": "92-64-5",
+  "parameters": 6277,
+  "quantization": "symmetric per-tensor weight-only INT8; float32 activations",
+  "scope": "host C simulator only; OpenVela board headers are intentionally untouched"
+}
