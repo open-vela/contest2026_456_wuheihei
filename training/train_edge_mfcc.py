@@ -20,16 +20,34 @@ def augmented_training_data(
     augmented: np.ndarray,
     indices: np.ndarray,
     fraction: float,
+    event_fraction: float | None,
+    background_fraction: float | None,
     seed: int,
 ) -> tuple[np.ndarray, np.ndarray]:
     train_x = clean_x[indices]
     train_y = y[indices]
     augmented_x = np.concatenate([copy[indices] for copy in augmented], axis=0)
     augmented_y = np.tile(train_y, augmented.shape[0])
-    use_count = min(len(augmented_x), int(round(len(augmented_x) * fraction)))
-    if use_count:
-        rng = np.random.default_rng(seed)
-        subset = rng.choice(len(augmented_x), size=use_count, replace=False)
+    event_fraction = fraction if event_fraction is None else event_fraction
+    background_fraction = fraction if background_fraction is None else background_fraction
+    for name, value in (
+        ("event_fraction", event_fraction),
+        ("background_fraction", background_fraction),
+    ):
+        if not 0.0 <= value <= 1.0:
+            raise ValueError(f"{name} must be in [0, 1], received {value}")
+
+    rng = np.random.default_rng(seed)
+    subsets = []
+    for class_id in range(len(LABEL_NAMES)):
+        candidates = np.where(augmented_y == class_id)[0]
+        class_fraction = background_fraction if class_id == 0 else event_fraction
+        use_count = min(len(candidates), int(round(len(candidates) * class_fraction)))
+        if use_count:
+            subsets.append(rng.choice(candidates, size=use_count, replace=False))
+    if subsets:
+        subset = np.concatenate(subsets)
+        rng.shuffle(subset)
         train_x = np.concatenate([train_x, augmented_x[subset]], axis=0)
         train_y = np.concatenate([train_y, augmented_y[subset]], axis=0)
     return train_x, train_y
@@ -140,6 +158,16 @@ def main() -> None:
     parser.add_argument("--hidden-dim", type=int, default=64)
     parser.add_argument("--class-weight-power", type=float, default=0.7)
     parser.add_argument("--aug-fraction", type=float, default=0.5)
+    parser.add_argument(
+        "--event-aug-fraction",
+        type=float,
+        help="fraction of cached augmented copies used for event classes; defaults to --aug-fraction",
+    )
+    parser.add_argument(
+        "--background-aug-fraction",
+        type=float,
+        help="fraction used for background; defaults to --aug-fraction",
+    )
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--lr", type=float, default=3e-3)
     parser.add_argument("--weight-decay", type=float, default=1e-4)
@@ -151,7 +179,13 @@ def main() -> None:
     y = clean_cache["Y"].astype(np.int64)
     folds = clean_cache["FOLDS"].astype(np.int64)
     sources = clean_cache["SOURCES"]
-    augmented = np.load(args.aug_cache, allow_pickle=True)["X_AUG"].astype(np.float32)
+    augmented_cache = np.load(args.aug_cache, allow_pickle=True)
+    augmented = augmented_cache["X_AUG"].astype(np.float32)
+    augmentation_profile = (
+        str(augmented_cache["AUGMENTATION_PROFILE"].item())
+        if "AUGMENTATION_PROFILE" in augmented_cache.files
+        else "legacy-unspecified"
+    )
     if clean_x.shape[1] != 92 or augmented.shape[1:] != clean_x.shape:
         raise ValueError("expected clean and augmented MFCC92 feature caches")
 
@@ -182,6 +216,8 @@ def main() -> None:
             augmented,
             train_indices,
             args.aug_fraction,
+            args.event_aug_fraction,
+            args.background_aug_fraction,
             args.seed + 1000 + test_fold,
         )
         mean = train_x.mean(axis=0).astype(np.float32)
@@ -241,6 +277,8 @@ def main() -> None:
         augmented,
         train_indices,
         args.aug_fraction,
+        args.event_aug_fraction,
+        args.background_aug_fraction,
         args.seed + 2000,
     )
     final_mean = final_x.mean(axis=0).astype(np.float32)
@@ -269,6 +307,14 @@ def main() -> None:
             "TRAINING_RECORDINGS": np.asarray(len(set(sources.tolist()))),
             "CLASS_WEIGHT_POWER": np.asarray(args.class_weight_power),
             "AUGMENTATION_FRACTION": np.asarray(args.aug_fraction),
+            "EVENT_AUGMENTATION_FRACTION": np.asarray(
+                args.aug_fraction if args.event_aug_fraction is None else args.event_aug_fraction
+            ),
+            "BACKGROUND_AUGMENTATION_FRACTION": np.asarray(
+                args.aug_fraction
+                if args.background_aug_fraction is None
+                else args.background_aug_fraction
+            ),
         },
     )
 
@@ -281,6 +327,16 @@ def main() -> None:
             "epochs": args.epochs,
             "class_weight_power": args.class_weight_power,
             "augmentation_fraction": args.aug_fraction,
+            "augmentation_profile": augmentation_profile,
+            "augmentation_copies": int(augmented.shape[0]),
+            "event_augmentation_fraction": (
+                args.aug_fraction if args.event_aug_fraction is None else args.event_aug_fraction
+            ),
+            "background_augmentation_fraction": (
+                args.aug_fraction
+                if args.background_aug_fraction is None
+                else args.background_aug_fraction
+            ),
             "feature_type": "40 time features + MFCC mean/std + MFCC delta mean/std",
         },
         "folds": fold_results,

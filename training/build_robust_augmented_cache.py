@@ -55,18 +55,55 @@ def augment(
     label: int,
     background: np.ndarray,
     rng: np.random.Generator,
+    profile: str,
 ) -> np.ndarray:
     value = pcm.astype(np.float32)
-    if rng.random() < 0.65:
-        value = stretch_to_length(value, float(rng.uniform(0.9, 1.1)))
-    if rng.random() < 0.75:
-        shift = int(rng.integers(-2400, 2401))
-        value = shift_with_zeros(value, shift)
-    value *= float(rng.uniform(0.55, 1.45))
-    if label != 0 and rng.random() < 0.85:
-        value = mix_background(value, background, float(rng.uniform(6.0, 24.0)))
-    elif rng.random() < 0.55:
-        value = add_noise(value, float(rng.uniform(10.0, 30.0)), rng)
+    if profile == "current":
+        if rng.random() < 0.65:
+            value = stretch_to_length(value, float(rng.uniform(0.9, 1.1)))
+        if rng.random() < 0.75:
+            value = shift_with_zeros(value, int(rng.integers(-2400, 2401)))
+        value *= float(rng.uniform(0.55, 1.45))
+        if label != 0 and rng.random() < 0.85:
+            value = mix_background(value, background, float(rng.uniform(6.0, 24.0)))
+        elif rng.random() < 0.55:
+            value = add_noise(value, float(rng.uniform(10.0, 30.0)), rng)
+    elif profile == "competition":
+        # Previous competition recipe: Gaussian noise, time shift, gain and
+        # time stretch. Zero padding replaces circular wrap-around so that an
+        # event cannot reappear at the opposite edge of the one-second window.
+        if rng.random() < 0.30:
+            value = stretch_to_length(value, float(rng.uniform(0.8, 1.2)))
+        if rng.random() < 0.50:
+            value = shift_with_zeros(value, int(rng.integers(-3200, 3201)))
+        if rng.random() < 0.50:
+            value *= float(rng.uniform(0.5, 1.5))
+        if rng.random() < 0.70:
+            value = add_noise(value, float(rng.uniform(5.0, 25.0)), rng)
+    elif profile == "hybrid":
+        # Keep the previous competition transforms, but split the corruption
+        # path between evaluation-aligned Gaussian noise and real same-fold
+        # background audio. Same-fold sampling prevents test-fold leakage.
+        if rng.random() < 0.35:
+            value = stretch_to_length(value, float(rng.uniform(0.85, 1.15)))
+        if rng.random() < 0.50:
+            value = shift_with_zeros(value, int(rng.integers(-3200, 3201)))
+        if rng.random() < 0.50:
+            value *= float(rng.uniform(0.5, 1.5))
+
+        corruption = rng.random()
+        if label != 0:
+            if corruption < 0.65:
+                value = add_noise(value, float(rng.uniform(3.0, 25.0)), rng)
+            elif corruption < 0.95:
+                value = mix_background(value, background, float(rng.uniform(3.0, 20.0)))
+        else:
+            if corruption < 0.35:
+                value = add_noise(value, float(rng.uniform(5.0, 25.0)), rng)
+            elif corruption < 0.60:
+                value = mix_background(value, background, float(rng.uniform(5.0, 20.0)))
+    else:
+        raise ValueError(f"unknown augmentation profile: {profile}")
     return np.clip(value, -32768.0, 32767.0).astype(np.int16)
 
 
@@ -76,6 +113,12 @@ def main() -> None:
     parser.add_argument("--copies", type=int, default=2)
     parser.add_argument("--seed", type=int, default=2026)
     parser.add_argument("--feature-mode", choices=("time40", "mfcc92"), default="time40")
+    parser.add_argument(
+        "--profile",
+        choices=("current", "competition", "hybrid"),
+        default="hybrid",
+        help="current v10, previous-competition recipe, or their leakage-safe hybrid",
+    )
     parser.add_argument("--out", default="results/esc50_robust_augmented_features.npz")
     args = parser.parse_args()
 
@@ -93,7 +136,13 @@ def main() -> None:
         rng = np.random.default_rng(args.seed + copy_index)
         for index, (pcm, label, fold) in enumerate(zip(pcm_values, labels.tolist(), folds.tolist()), start=1):
             background_index = int(rng.choice(background_by_fold[int(fold)]))
-            augmented = augment(pcm, int(label), pcm_values[background_index], rng)
+            augmented = augment(
+                pcm,
+                int(label),
+                pcm_values[background_index],
+                rng,
+                args.profile,
+            )
             if args.feature_mode == "mfcc92":
                 features.append(extract_features_mfcc_from_pcm(augmented, include_delta=True))
             else:
@@ -112,8 +161,10 @@ def main() -> None:
         SOURCES=base["SOURCES"],
         FOLDS=folds,
         DESCRIPTION=np.asarray(
-            "train-only gain, zero-padded shift, mild stretch, Gaussian noise, same-fold real background mixing"
+            "train-only gain, zero-padded shift, stretch, Gaussian noise, same-fold real background mixing"
         ),
+        AUGMENTATION_PROFILE=np.asarray(args.profile),
+        AUGMENTATION_SEED=np.asarray(args.seed),
     )
     print(f"saved {output}")
 
