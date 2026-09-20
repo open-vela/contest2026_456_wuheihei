@@ -496,7 +496,7 @@ def build(template: Path, output: Path, figure: Path, metrics_path: Path) -> Non
         ["端侧部署", "app/audiodetect/、board/", "代码与既有镜像证据；新真机量化未做"],
         ["自建 Skill", "skills/openvela-audio-validation/SKILL.md", "已提交，AI Coding 工作流"],
         ["AI Coding 日志", "logs/bilibilidev/", "官方 schema 校验通过"],
-        ["技术报告", "docs/submission/", "DOCX 与 PDF"],
+        ["技术报告", "docs/submission/", "DOCX"],
         ["演示视频", "由团队单独准备", "不在本次生成范围"],
     ], widths=[3.8, 6.3, 5.3])
 
