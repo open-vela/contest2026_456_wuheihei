@@ -76,10 +76,10 @@ C 链路验证在 Linux 主机模拟器上重新编译当前源码完成。
 - 没有长时间连续运行、异常恢复和压力测试数据。
 - 没有对不同麦克风、距离、方位和真实房间混响做系统性真机评测。
 
-## 已知文档与配置差异
+## 板级配置说明
 
-- `app/audiodetect/Kconfig` 的帮助文字仍写着 1024×600 LVGL 界面，而当前 UI 布局为 320 像素宽、约 232 像素高。
-- 板级增量 `configs/nsh/defconfig` 选择 T070S140B 面板，冻结参考配置 `reference/nuttx_savedefconfig` 与 `reference/openvela_active.config` 选择 ILI9341，两者存在差异。
+- v11 镜像使用 ILI9341（320×240）配置，`audiodetect_ui.c` 的界面按 320×232 布局，`app/audiodetect/Kconfig` 的帮助文字与该分辨率一致。
+- `board/r528s3-gemini-s1/configs/nsh/defconfig` 与 `reference/nuttx_savedefconfig` 逐字节相同；厂商 BSP 默认的 `configs/nsh/defconfig` 选择 7 英寸 T070S140B（1024×600）面板，本仓库已替换为构建镜像时实际生效的 ILI9341 版本。
 
 ## 结论边界
 
