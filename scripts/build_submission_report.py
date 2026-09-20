@@ -423,7 +423,7 @@ def build(template: Path, output: Path, figure: Path, metrics_path: Path) -> Non
         ["关键词识别", "命令行 WAV 路径", "未接入实时 UI，未做本次真机验证"],
     ], widths=[3.2, 3.1, 9.1])
     add_body(doc, "当前通过 `arecord` 分段写入 WAV，而非连续 PCM/I2S 环形缓冲，因此片段间可能存在空隙；未实现重叠滑窗、多标签、事件起止定位、持久数据库、OTA、在线学习或模型在线更新。")
-    add_body(doc, "板级材料中存在需要保留的复现风险：`board/.../configs/nsh/defconfig` 选择 T070S140B，而冻结参考 `nuttx_savedefconfig` 与 `openvela_active.config` 选择 ILI9341，LVGL LCD 后端也有差异。本次遵守“部署冻结”要求，不继续改板或重建镜像，因此报告只声明代码集成与既有镜像构建，不声称当前 overlay 已重新复现冻结镜像。")
+    add_body(doc, "板级配置已与镜像对齐：v11 镜像使用 ILI9341（320×240）面板，`board/r528s3-gemini-s1/configs/nsh/defconfig` 与 `reference/nuttx_savedefconfig` 逐字节相同，界面按 320×232 布局。厂商 BSP 默认 defconfig 选择的 7 英寸 T070S140B（1024×600）面板未被采用，仓库中的 defconfig 已替换为构建镜像时实际生效的版本。")
 
     add_heading(doc, "3.4.4 自建 AI Coding Skill", 3)
     add_body(doc, "仓库提供 `skills/openvela-audio-validation/SKILL.md`，触发词包括“复现 Audio Sentinel v11”“核对 OpenVela 音频模型”“验证音频事件部署证据”。Skill 固化了分层验证、模型哈希、指标解释、C 模拟器验证和板级边界。")

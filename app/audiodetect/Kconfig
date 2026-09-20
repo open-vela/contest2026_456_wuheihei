@@ -27,9 +27,9 @@ config AE_AUDIODETECT_UI
 	default n
 	depends on GRAPHICS_LVGL
 	---help---
-		Enable a 1024x600 LVGL touch interface. The interface records
+		Enable a 320x240 LVGL touch interface. The interface records
 		three-second segments, analyzes three one-second model windows,
-		and displays live probabilities and recent alerts.
+		and displays the current class and confidence.
 
 if AE_AUDIODETECT_UI
 
